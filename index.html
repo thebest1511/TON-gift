@@ -15,7 +15,6 @@
         .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
-        .floor { font-size: 0.9em; color: #aaa; }
         .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
     </style>
 </head>
@@ -23,9 +22,9 @@
     <h2>🔥 TON Gifts — Живые листинги</h2>
 
     <div class="tabs">
-        <div class="tab active">Листинг</div>
-        <div class="tab">Продажа</div>
-        <div class="tab">Аренда</div>
+        <div class="tab active" onclick="showTab('listing')">Листинг</div>
+        <div class="tab" onclick="showTab('sales')">Продажа</div>
+        <div class="tab" onclick="showTab('rent')">Аренда</div>
     </div>
 
     <div id="content">
@@ -38,8 +37,24 @@
 
         const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";
 
+        function showTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const content = document.getElementById("content");
+            if (tab === 'listing') {
+                loadListings();
+            } else if (tab === 'sales') {
+                content.innerHTML = "<div class='loading'>Вкладка Продажа — скоро будет доступна!</div>";
+            } else if (tab === 'rent') {
+                content.innerHTML = "<div class='loading'>Вкладка Аренда — скоро будет доступна!</div>";
+            }
+        }
+
         async function loadListings() {
             const content = document.getElementById("content");
+            content.innerHTML = "<div class='loading'>Загрузка новых листингов...</div>";
             try {
                 const headers = { "Authorization": `Bearer ${API_KEY}` };
                 const resp = await fetch("https://tonapi.io/v2/events?limit=50", { headers });
@@ -98,8 +113,13 @@
             }
         }
 
+        // Загрузка при открытии (для вкладки Листинг)
         loadListings();
-        setInterval(loadListings, 20000);
+        setInterval(() => {
+            if (document.querySelector('.tab.active').innerText === 'Листинг') {
+                loadListings();
+            }
+        }, 20000);
     </script>
 </body>
 </html>
