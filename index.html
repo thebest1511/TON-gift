@@ -36,11 +36,14 @@
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
+        const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";  // твой ключ
+
         async function loadListings() {
             const content = document.getElementById("content");
             try {
-                const resp = await fetch("https://tonapi.io/v2/events?limit=50");
-                if (!resp.ok) throw new Error("API error");
+                const headers = API_KEY ? { "Authorization": `Bearer ${API_KEY}` } : {};
+                const resp = await fetch("https://tonapi.io/v2/events?limit=50", { headers });
+                if (!resp.ok) throw new Error("API error " + resp.status);
                 const data = await resp.json();
                 const events = data.events || [];
 
@@ -54,7 +57,7 @@
                             const nft = sale.nft;
                             const price = (sale.price.value / 1000000000).toFixed(2);
 
-                            const nftResp = await fetch(`https://tonapi.io/v2/nfts/${nft}`);
+                            const nftResp = await fetch(`https://tonapi.io/v2/nfts/${nft}`, { headers });
                             if (!nftResp.ok) continue;
                             const nftData = await nftResp.json();
 
@@ -64,7 +67,7 @@
                             const collectionName = collection.name || "Unknown";
 
                             const previews = nftData.previews || [];
-                            const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
+                            const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=No+Image";
 
                             listings.push({
                                 name, collectionName, price, image
@@ -75,7 +78,7 @@
 
                 let html = "";
                 if (listings.length === 0) {
-                    html = "<div class='loading'>Пока нет новых листингов. Обновлю через 20 сек.</div>";
+                    html = "<div class='loading'>Пока нет новых листингов.<br>Обновлю через 20 сек.</div>";
                 } else {
                     for (let l of listings.slice(0, 20)) {
                         html += `
@@ -91,12 +94,12 @@
                 }
                 content.innerHTML = html;
             } catch (e) {
-                content.innerHTML = "<div class='error'>Ошибка загрузки данных. Попробую снова через 20 сек.</div>";
+                content.innerHTML = "<div class='error'>Ошибка загрузки. Попробую снова через 20 сек.</div>";
             }
         }
 
         loadListings();
-        setInterval(loadListings, 20000); // обновление каждые 20 секунд
+        setInterval(loadListings, 20000);
     </script>
 </body>
 </html>
