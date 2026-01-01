@@ -15,11 +15,12 @@
         .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
+        .floor { font-size: 0.9em; color: #aaa; }
         .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
     </style>
 </head>
 <body>
-    <h2>🔥 TON Gifts — Живые листинги</h2>
+    <h2>🔥 TON Gifts — Коллекции и листинги</h2>
 
     <div class="tabs">
         <div class="tab active" onclick="showTab('listing')">Листинг</div>
@@ -28,7 +29,7 @@
     </div>
 
     <div id="content">
-        <div class="loading">Загрузка новых листингов...</div>
+        <div class="loading">Загрузка коллекций подарков...</div>
     </div>
 
     <script>
@@ -44,82 +45,78 @@
 
             const content = document.getElementById("content");
             if (tab === 'listing') {
-                loadListings();
+                loadGiftsCollections();
             } else if (tab === 'sales') {
-                content.innerHTML = "<div class='loading'>Вкладка Продажа — скоро будет доступна!</div>";
+                content.innerHTML = "<div class='loading'>Вкладка Продажа — скоро будет!</div>";
             } else if (tab === 'rent') {
-                content.innerHTML = "<div class='loading'>Вкладка Аренда — скоро будет доступна!</div>";
+                content.innerHTML = "<div class='loading'>Вкладка Аренда — скоро будет!</div>";
             }
         }
 
-        async function loadListings() {
+        async function loadGiftsCollections() {
             const content = document.getElementById("content");
-            content.innerHTML = "<div class='loading'>Загрузка новых листингов...</div>";
+            content.innerHTML = "<div class='loading'>Загрузка коллекций подарков...</div>";
+
             try {
                 const headers = { "Authorization": `Bearer ${API_KEY}` };
-                const resp = await fetch("https://tonapi.io/v2/events?limit=50", { headers });
-                if (!resp.ok) throw new Error();
-                const data = await resp.json();
-                const events = data.events || [];
 
-                let listings = [];
-
-                for (let event of events) {
-                    const actions = event.actions || [];
-                    for (let action of actions) {
-                        if (action.type === "NftItemSalePlace") {
-                            const sale = action.NftItemSalePlace;
-                            const nft = sale.nft;
-                            const price = (sale.price.value / 1000000000).toFixed(2);
-
-                            try {
-                                const nftResp = await fetch(`https://tonapi.io/v2/nfts/${nft}`, { headers });
-                                if (!nftResp.ok) continue;
-                                const nftData = await nftResp.json();
-
-                                const metadata = nftData.metadata || {};
-                                const name = metadata.name || "Gift";
-                                const collection = nftData.collection || {};
-                                const collectionName = collection.name || "Unknown";
-
-                                const previews = nftData.previews || [];
-                                const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
-
-                                listings.push({ name, collectionName, price, image });
-                            } catch {}
-                        }
-                    }
-                }
+                // Известные коллекции подарков (можно добавить больше)
+                const collections = [
+                    "EQDU4-7mWrsuVEBT2rLqZprQ2S9U0KX4hB3i6L1zpKqK0T7", // Khabib's Papakha
+                    "EQB8rKzZ4ZJyQ7y6Z8vJ6vY9Z8vJ6vY9Z8vJ6vY9Z8vJ6vY9", // другие (добавь, если знаешь)
+                ];
 
                 let html = "";
-                if (listings.length === 0) {
-                    html = "<div class='loading'>Пока нет новых листингов.<br>Обновлю через 20 секунд...</div>";
-                } else {
-                    for (let l of listings.slice(0, 20)) {
-                        html += `
+                for (let addr of collections) {
+                    const collectionResp = await fetch(`https://tonapi.io/v2/nft/collections/${addr}`, { headers });
+                    if (!collectionResp.ok) continue;
+                    const collectionData = await collectionResp.json();
+
+                    const name = collectionData.name || "Gift Collection";
+
+                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${addr}/floor_price`, { headers });
+                    const floorData = await floorResp.ok ? await floorResp.json() : {};
+                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
+
+                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${addr}/items?limit=5`, { headers });
+                    const itemsData = await itemsResp.json();
+                    const items = itemsData.nft_items || [];
+
+                    let itemsHtml = "";
+                    for (let item of items.slice(0, 3)) {
+                        const itemName = item.metadata.name || "Gift";
+                        const itemPrice = item.sale ? (item.sale.price.value / 1000000000).toFixed(2) : "—";
+                        const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
+
+                        itemsHtml += `
                         <div class="card">
-                            <img src="${l.image}" alt="gift">
+                            <img src="${itemImage}" alt="gift">
                             <div class="info">
-                                <div>[${l.collectionName}]</div>
-                                <div>${l.name}</div>
-                                <div class="price">${l.price} TON</div>
+                                <div>${itemName}</div>
+                                <div class="price">${itemPrice} TON</div>
                             </div>
                         </div>`;
                     }
+
+                    html += `
+                    <div style="margin-bottom: 30px;">
+                        <h3>${name}</h3>
+                        <div class="floor">Флор коллекции: ${floor} TON</div>
+                        ${itemsHtml || "<div class='loading'>Нет листингов в этой коллекции</div>"}
+                    </div>`;
+                }
+
+                if (html === "") {
+                    html = "<div class='loading'>Пока нет доступных коллекций.</div>";
                 }
                 content.innerHTML = html;
             } catch (e) {
-                content.innerHTML = "<div class='loading'>Пока нет новых листингов или временная проблема с API.<br>Обновлю через 20 секунд...</div>";
+                content.innerHTML = "<div class='loading'>Проблема с загрузкой. Обновлю через 30 секунд...</div>";
             }
         }
 
-        // Загрузка при открытии (для вкладки Листинг)
-        loadListings();
-        setInterval(() => {
-            if (document.querySelector('.tab.active').innerText === 'Листинг') {
-                loadListings();
-            }
-        }, 20000);
+        loadGiftsCollections();
+        setInterval(loadGiftsCollections, 30000); // обновление каждые 30 секунд
     </script>
 </body>
 </html>
