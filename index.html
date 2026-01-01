@@ -56,7 +56,7 @@
 
             const headers = { "Authorization": `Bearer ${API_KEY}` };
 
-            // Реальные коллекции Telegram Gifts (2025-2026)
+            // Реальные коллекции Telegram Gifts (актуальные на 2026)
             const collections = [
                 { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
                 { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
@@ -67,7 +67,7 @@
                 { addr: "EQD7yDu2WCgd9Uzx1dF_DQkWK7IZJJ4Mp9M9g1rGUUiQE43m", name: "Love Potions" },
                 { addr: "EQBD8aBKC4NsnYMqtkCfPQk2EVnieynJQp1UgZVyx1VmR5Ml", name: "Witch Hats" },
                 { addr: "EQC6zjid8vJNEWqcXk10XjsdDLRKbcPZzbHusuEW6FokOWIm", name: "Lol Pops" },
-                // Добавь больше, если нужно
+                { addr: "EQDU4-7mWrsuVEBT2rLqZprQ2S9U0KX4hB3i6L1zpKqK0T7", name: "Khabib's Papakha" }  // добавил Хабиба
             ];
 
             let html = "";
@@ -109,7 +109,9 @@
                         <div class="floor">Флор коллекции: ${floor} TON</div>
                         ${itemsHtml || "<div class='loading'>Нет активных листингов в этой коллекции</div>"}
                     </div>`;
-                } catch {}
+                } catch (e) {
+                    console.error(e);
+                }
             }
 
             if (html === "") {
