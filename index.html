@@ -16,8 +16,7 @@
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
         .floor { font-size: 0.9em; color: #aaa; }
-        .market { font-size: 0.9em; color: #4caf50; }
-        .loading { text-align: center; padding: 20px; font-size: 1.2em; }
+        .loading, .error { text-align: center; padding: 20px; font-size: 1.2em; }
     </style>
 </head>
 <body>
@@ -38,8 +37,10 @@
         Telegram.WebApp.expand();
 
         async function loadListings() {
+            const content = document.getElementById("content");
             try {
                 const resp = await fetch("https://tonapi.io/v2/events?limit=50");
+                if (!resp.ok) throw new Error("API error");
                 const data = await resp.json();
                 const events = data.events || [];
 
@@ -54,6 +55,7 @@
                             const price = (sale.price.value / 1000000000).toFixed(2);
 
                             const nftResp = await fetch(`https://tonapi.io/v2/nfts/${nft}`);
+                            if (!nftResp.ok) continue;
                             const nftData = await nftResp.json();
 
                             const metadata = nftData.metadata || {};
@@ -62,14 +64,10 @@
                             const collectionName = collection.name || "Unknown";
 
                             const previews = nftData.previews || [];
-                            const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80";
-
-                            const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${collection.address}/floor_price`);
-                            const floorData = await floorResp.json();
-                            const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
+                            const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
 
                             listings.push({
-                                name, collectionName, price, floor, image
+                                name, collectionName, price, image
                             });
                         }
                     }
@@ -77,7 +75,7 @@
 
                 let html = "";
                 if (listings.length === 0) {
-                    html = "<div class='loading'>Пока нет новых листингов</div>";
+                    html = "<div class='loading'>Пока нет новых листингов. Обновлю через 20 сек.</div>";
                 } else {
                     for (let l of listings.slice(0, 20)) {
                         html += `
@@ -87,14 +85,13 @@
                                 <div>[${l.collectionName}]</div>
                                 <div>${l.name}</div>
                                 <div class="price">${l.price} TON</div>
-                                <div class="floor">Флор: ${l.floor} TON</div>
                             </div>
                         </div>`;
                     }
                 }
-                document.getElementById("content").innerHTML = html;
+                content.innerHTML = html;
             } catch (e) {
-                document.getElementById("content").innerHTML = "<div class='loading'>Ошибка загрузки</div>";
+                content.innerHTML = "<div class='error'>Ошибка загрузки данных. Попробую снова через 20 сек.</div>";
             }
         }
 
