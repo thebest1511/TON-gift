@@ -46,8 +46,8 @@
             event.target.classList.add('active');
 
             if (tab === 'listing') loadGiftsCollections();
-            else if (tab === 'sales') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Продажа — скоро!</div>";
-            else if (tab === 'rent') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Аренда — скоро!</div>";
+            else if (tab === 'sales') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Продажа — скоро будет!</div>";
+            else if (tab === 'rent') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Аренда — скоро будет!</div>";
         }
 
         async function loadGiftsCollections() {
@@ -56,18 +56,18 @@
 
             const headers = { "Authorization": `Bearer ${API_KEY}` };
 
-            // Реальные коллекции Telegram Gifts (актуальные на 2026)
+            // Реальные коллекции Telegram Gifts (топ с GetGems)
             const collections = [
-                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
                 { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
                 { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
-                { addr: "EQACcQpR2fmdeENWdE2YGQWHVxSTyA8Zq4_k7rk_IaxCRXNe", name: "Vintage Cigars" },
+                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
                 { addr: "EQCWh1lPltyTwCWxCXm4umL5tPZoXR8kTIcT-pd0JqoadLHo", name: "Diamond Rings" },
                 { addr: "EQBMcfMAZlMUr1W3X8kdEw3fJMUAaWH4-XcmE5R5RfFIY0E2", name: "Desk Calendars" },
-                { addr: "EQD7yDu2WCgd9Uzx1dF_DQkWK7IZJJ4Mp9M9g1rGUUiQE43m", name: "Love Potions" },
                 { addr: "EQBD8aBKC4NsnYMqtkCfPQk2EVnieynJQp1UgZVyx1VmR5Ml", name: "Witch Hats" },
                 { addr: "EQC6zjid8vJNEWqcXk10XjsdDLRKbcPZzbHusuEW6FokOWIm", name: "Lol Pops" },
-                { addr: "EQDU4-7mWrsuVEBT2rLqZprQ2S9U0KX4hB3i6L1zpKqK0T7", name: "Khabib's Papakha" }  // добавил Хабиба
+                { addr: "EQD9ikZq6xPgKjzmdBG0G0S80RvUJjbwgHrPZXDKc_wsE84w", name: "Durov’s Caps" },
+                { addr: "EQBT9PbZBR6FGcZBSnwgo-DLpc0r7_X_8dlhG5UA6v9l9uJM", name: "Cookie Hearts" },
+                { addr: "EQDLM65t0shS7gZAg0lMltGHYhsU94PzsMJHhYibmRV7kdUs", name: "Candy Canes" }
             ];
 
             let html = "";
@@ -115,7 +115,7 @@
             }
 
             if (html === "") {
-                html = "<div class='loading'>Пока нет доступных коллекций или проблема с API.<br>Обновлю через 30 секунд...</div>";
+                html = "<div class='loading'>Пока нет доступных коллекций.<br>Обновлю через 30 секунд...</div>";
             }
             content.innerHTML = html;
         }
