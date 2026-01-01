@@ -36,14 +36,14 @@
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
-        const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";  // твой ключ
+        const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";
 
         async function loadListings() {
             const content = document.getElementById("content");
             try {
                 const headers = { "Authorization": `Bearer ${API_KEY}` };
                 const resp = await fetch("https://tonapi.io/v2/events?limit=50", { headers });
-                if (!resp.ok) throw new Error("API error " + resp.status);
+                if (!resp.ok) throw new Error();
                 const data = await resp.json();
                 const events = data.events || [];
 
@@ -57,21 +57,21 @@
                             const nft = sale.nft;
                             const price = (sale.price.value / 1000000000).toFixed(2);
 
-                            const nftResp = await fetch(`https://tonapi.io/v2/nfts/${nft}`, { headers });
-                            if (!nftResp.ok) continue;
-                            const nftData = await nftResp.json();
+                            try {
+                                const nftResp = await fetch(`https://tonapi.io/v2/nfts/${nft}`, { headers });
+                                if (!nftResp.ok) continue;
+                                const nftData = await nftResp.json();
 
-                            const metadata = nftData.metadata || {};
-                            const name = metadata.name || "Gift";
-                            const collection = nftData.collection || {};
-                            const collectionName = collection.name || "Unknown";
+                                const metadata = nftData.metadata || {};
+                                const name = metadata.name || "Gift";
+                                const collection = nftData.collection || {};
+                                const collectionName = collection.name || "Unknown";
 
-                            const previews = nftData.previews || [];
-                            const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=No+Image";
+                                const previews = nftData.previews || [];
+                                const image = previews.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
 
-                            listings.push({
-                                name, collectionName, price, image
-                            });
+                                listings.push({ name, collectionName, price, image });
+                            } catch {}
                         }
                     }
                 }
@@ -94,12 +94,12 @@
                 }
                 content.innerHTML = html;
             } catch (e) {
-                content.innerHTML = "<div class='loading'>Временная проблема с API.<br>Попробую снова через 20 секунд...</div>";
+                content.innerHTML = "<div class='loading'>Пока нет новых листингов или временная проблема с API.<br>Обновлю через 20 секунд...</div>";
             }
         }
 
         loadListings();
-        setInterval(loadListings, 20000); // обновление каждые 20 секунд
+        setInterval(loadListings, 20000);
     </script>
 </body>
 </html>
