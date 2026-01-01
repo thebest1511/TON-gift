@@ -11,7 +11,9 @@
         .tabs { display: flex; margin: 20px 0; gap: 10px; }
         .tab { flex: 1; padding: 12px; background: #333; text-align: center; border-radius: 8px; cursor: pointer; }
         .tab.active { background: #007bff; }
-        .card { background: #1e1e1e; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
+        .collection { background: #1e1e1e; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        .collection h3 { margin: 0 0 10px 0; }
+        .card { background: #2d2d2d; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
         .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
@@ -20,7 +22,7 @@
     </style>
 </head>
 <body>
-    <h2>🔥 TON Gifts — Коллекции и листинги</h2>
+    <h2>🔥 TON Gifts — Коллекции подарков</h2>
 
     <div class="tabs">
         <div class="tab active" onclick="showTab('listing')">Листинг</div>
@@ -43,48 +45,51 @@
             tabs.forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
 
-            const content = document.getElementById("content");
-            if (tab === 'listing') {
-                loadGiftsCollections();
-            } else if (tab === 'sales') {
-                content.innerHTML = "<div class='loading'>Вкладка Продажа — скоро будет!</div>";
-            } else if (tab === 'rent') {
-                content.innerHTML = "<div class='loading'>Вкладка Аренда — скоро будет!</div>";
-            }
+            if (tab === 'listing') loadGiftsCollections();
+            else if (tab === 'sales') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Продажа — скоро!</div>";
+            else if (tab === 'rent') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Аренда — скоро!</div>";
         }
 
         async function loadGiftsCollections() {
             const content = document.getElementById("content");
             content.innerHTML = "<div class='loading'>Загрузка коллекций подарков...</div>";
 
-            try {
-                const headers = { "Authorization": `Bearer ${API_KEY}` };
+            const headers = { "Authorization": `Bearer ${API_KEY}` };
 
-                // Известные коллекции подарков (можно добавить больше)
-                const collections = [
-                    "EQDU4-7mWrsuVEBT2rLqZprQ2S9U0KX4hB3i6L1zpKqK0T7", // Khabib's Papakha
-                    "EQB8rKzZ4ZJyQ7y6Z8vJ6vY9Z8vJ6vY9Z8vJ6vY9Z8vJ6vY9", // другие (добавь, если знаешь)
-                ];
+            // Реальные коллекции Telegram Gifts (2025-2026)
+            const collections = [
+                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
+                { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
+                { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
+                { addr: "EQACcQpR2fmdeENWdE2YGQWHVxSTyA8Zq4_k7rk_IaxCRXNe", name: "Vintage Cigars" },
+                { addr: "EQCWh1lPltyTwCWxCXm4umL5tPZoXR8kTIcT-pd0JqoadLHo", name: "Diamond Rings" },
+                { addr: "EQBMcfMAZlMUr1W3X8kdEw3fJMUAaWH4-XcmE5R5RfFIY0E2", name: "Desk Calendars" },
+                { addr: "EQD7yDu2WCgd9Uzx1dF_DQkWK7IZJJ4Mp9M9g1rGUUiQE43m", name: "Love Potions" },
+                { addr: "EQBD8aBKC4NsnYMqtkCfPQk2EVnieynJQp1UgZVyx1VmR5Ml", name: "Witch Hats" },
+                { addr: "EQC6zjid8vJNEWqcXk10XjsdDLRKbcPZzbHusuEW6FokOWIm", name: "Lol Pops" },
+                // Добавь больше, если нужно
+            ];
 
-                let html = "";
-                for (let addr of collections) {
-                    const collectionResp = await fetch(`https://tonapi.io/v2/nft/collections/${addr}`, { headers });
-                    if (!collectionResp.ok) continue;
-                    const collectionData = await collectionResp.json();
+            let html = "";
+            for (let col of collections) {
+                try {
+                    const colResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}`, { headers });
+                    if (!colResp.ok) continue;
+                    const colData = await colResp.json();
 
-                    const name = collectionData.name || "Gift Collection";
+                    const name = colData.name || col.name;
 
-                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${addr}/floor_price`, { headers });
+                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`, { headers });
                     const floorData = await floorResp.ok ? await floorResp.json() : {};
                     const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
 
-                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${addr}/items?limit=5`, { headers });
-                    const itemsData = await itemsResp.json();
+                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=10`, { headers });
+                    const itemsData = await itemsResp.ok ? await itemsResp.json() : {};
                     const items = itemsData.nft_items || [];
 
                     let itemsHtml = "";
-                    for (let item of items.slice(0, 3)) {
-                        const itemName = item.metadata.name || "Gift";
+                    for (let item of items.slice(0, 5)) {
+                        const itemName = item.metadata?.name || "Gift";
                         const itemPrice = item.sale ? (item.sale.price.value / 1000000000).toFixed(2) : "—";
                         const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
 
@@ -99,24 +104,22 @@
                     }
 
                     html += `
-                    <div style="margin-bottom: 30px;">
+                    <div class="collection">
                         <h3>${name}</h3>
                         <div class="floor">Флор коллекции: ${floor} TON</div>
-                        ${itemsHtml || "<div class='loading'>Нет листингов в этой коллекции</div>"}
+                        ${itemsHtml || "<div class='loading'>Нет активных листингов в этой коллекции</div>"}
                     </div>`;
-                }
-
-                if (html === "") {
-                    html = "<div class='loading'>Пока нет доступных коллекций.</div>";
-                }
-                content.innerHTML = html;
-            } catch (e) {
-                content.innerHTML = "<div class='loading'>Проблема с загрузкой. Обновлю через 30 секунд...</div>";
+                } catch {}
             }
+
+            if (html === "") {
+                html = "<div class='loading'>Пока нет доступных коллекций или проблема с API.<br>Обновлю через 30 секунд...</div>";
+            }
+            content.innerHTML = html;
         }
 
         loadGiftsCollections();
-        setInterval(loadGiftsCollections, 30000); // обновление каждые 30 секунд
+        setInterval(loadGiftsCollections, 30000);
     </script>
 </body>
 </html>
