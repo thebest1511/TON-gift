@@ -16,7 +16,7 @@
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
         .floor { font-size: 0.9em; color: #aaa; }
-        .loading, .error { text-align: center; padding: 20px; font-size: 1.2em; }
+        .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
     </style>
 </head>
 <body>
@@ -41,7 +41,7 @@
         async function loadListings() {
             const content = document.getElementById("content");
             try {
-                const headers = API_KEY ? { "Authorization": `Bearer ${API_KEY}` } : {};
+                const headers = { "Authorization": `Bearer ${API_KEY}` };
                 const resp = await fetch("https://tonapi.io/v2/events?limit=50", { headers });
                 if (!resp.ok) throw new Error("API error " + resp.status);
                 const data = await resp.json();
@@ -78,7 +78,7 @@
 
                 let html = "";
                 if (listings.length === 0) {
-                    html = "<div class='loading'>Пока нет новых листингов.<br>Обновлю через 20 сек.</div>";
+                    html = "<div class='loading'>Пока нет новых листингов.<br>Обновлю через 20 секунд...</div>";
                 } else {
                     for (let l of listings.slice(0, 20)) {
                         html += `
@@ -94,12 +94,12 @@
                 }
                 content.innerHTML = html;
             } catch (e) {
-                content.innerHTML = "<div class='error'>Ошибка загрузки. Попробую снова через 20 сек.</div>";
+                content.innerHTML = "<div class='loading'>Временная проблема с API.<br>Попробую снова через 20 секунд...</div>";
             }
         }
 
         loadListings();
-        setInterval(loadListings, 20000);
+        setInterval(loadListings, 20000); // обновление каждые 20 секунд
     </script>
 </body>
 </html>
