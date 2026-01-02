@@ -11,111 +11,31 @@
         .tabs { display: flex; margin: 20px 0; gap: 10px; }
         .tab { flex: 1; padding: 12px; background: #333; text-align: center; border-radius: 8px; cursor: pointer; }
         .tab.active { background: #007bff; }
-        .collection { background: #1e1e1e; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-        .collection h3 { margin: 0 0 10px 0; }
-        .card { background: #2d2d2d; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
+        .card { background: #1e1e1e; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
         .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
-        .floor { font-size: 0.9em; color: #aaa; }
-        .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
+        .loading { text-align: center; padding: 20px; font-size: 1.2em; color: #aaa; }
     </style>
 </head>
 <body>
-    <h2>🔥 TON Gifts — Коллекции подарков</h2>
+    <h2>🔥 TON Gifts — Живые листинги</h2>
 
     <div class="tabs">
-        <div class="tab active" onclick="showTab('listing')">Листинг</div>
-        <div class="tab" onclick="showTab('sales')">Продажа</div>
-        <div class="tab" onclick="showTab('rent')">Аренда</div>
+        <div class="tab active">Листинг</div>
+        <div class="tab">Продажа</div>
+        <div class="tab">Аренда</div>
     </div>
 
     <div id="content">
-        <div class="loading">Загрузка коллекций подарков...</div>
+        <div class="loading">Загрузка новых листингов...</div>
     </div>
 
     <script>
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
-        const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";
-
-        function showTab(tab) {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-
-            if (tab === 'listing') loadGiftsCollections();
-            else document.getElementById("content").innerHTML = "<div class='loading'>Вкладка скоро будет доступна!</div>";
-        }
-
-        async function loadGiftsCollections() {
-            const content = document.getElementById("content");
-            content.innerHTML = "<div class='loading'>Загрузка коллекций подарков...</div>";
-
-            const headers = { "Authorization": `Bearer ${API_KEY}` };
-
-            const collections = [
-                { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
-                { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
-                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
-                { addr: "EQD9ikZq6xPgKjzmdBG0G0S80RvUJjbwgHrPZXDKc_wsE84w", name: "Durov’s Caps" },
-                { addr: "EQBT9PbZBR6FGcZBSnwgo-DLpc0r7_X_8dlhG5UA6v9l9uJM", name: "Cookie Hearts" },
-                { addr: "EQDLM65t0shS7gZAg0lMltGHYhsU94PzsMJHhYibmRV7kdUs", name: "Candy Canes" }
-            ];
-
-            let html = "";
-            for (let col of collections) {
-                try {
-                    const colResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}`, { headers });
-                    if (!colResp.ok) continue;
-                    const colData = await colResp.json();
-
-                    const name = colData.name || col.name;
-
-                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`, { headers });
-                    const floorData = await floorResp.ok ? await floorResp.json() : {};
-                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
-
-                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=10`, { headers });
-                    const itemsData = await itemsResp.ok ? await itemsResp.json() : {};
-                    const items = itemsData.nft_items || [];
-
-                    let itemsHtml = "";
-                    for (let item of items.slice(0, 5)) {
-                        const itemName = item.metadata?.name || "Gift";
-                        const itemPrice = item.sale ? (item.sale.price.value / 1000000000).toFixed(2) : "—";
-                        const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
-
-                        itemsHtml += `
-                        <div class="card">
-                            <img src="${itemImage}" alt="gift">
-                            <div class="info">
-                                <div>${itemName}</div>
-                                <div class="price">${itemPrice} TON</div>
-                            </div>
-                        </div>`;
-                    }
-
-                    html += `
-                    <div class="collection">
-                        <h3>${name}</h3>
-                        <div class="floor">Флор коллекции: ${floor} TON</div>
-                        ${itemsHtml || "<div class='loading'>Нет активных листингов в этой коллекции</div>"}
-                    </div>`;
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-
-            if (html === "") {
-                html = "<div class='loading'>Пока нет доступных коллекций.<br>Обновлю через 30 секунд...</div>";
-            }
-            content.innerHTML = html;
-        }
-
-        loadGiftsCollections();
-        setInterval(loadGiftsCollections, 30000);
+        document.getElementById("content").innerHTML = "<div class='loading'>Приложение работает! Скоро добавим реальные листинги подарков.</div>";
     </script>
 </body>
 </html>
