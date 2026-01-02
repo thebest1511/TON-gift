@@ -18,12 +18,12 @@
         .info { flex: 1; }
         .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
         .floor { font-size: 0.9em; color: #aaa; }
-        .profitable { color: #ff0000; font-weight: bold; }
+        .profitable { color: #ff0000; font-weight: bold; font-size: 1.1em; }
         .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
     </style>
 </head>
 <body>
-    <h2>🔥 TON Gifts — Выгодные листинги</h2>
+    <h2>🔥 TON Gifts — Реальные листинги</h2>
 
     <div class="tabs">
         <div class="tab active" onclick="showTab('listing')">Листинг</div>
@@ -56,9 +56,13 @@
 
             const headers = { "Authorization": `Bearer ${API_KEY}` };
 
+            // Реальные коллекции подарков (актуальные)
             const collections = [
+                { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
+                { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
+                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
                 { addr: "EQDsiZuliQn_FTUeyCVaVhojljY7LmimdUtJK1SntGTzff5z", name: "Khabib's Papakhas" },
-                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" }
+                { addr: "EQD9ikZq6xPgKjzmdBG0G0S80RvUJjbwgHrPZXDKc_wsE84w", name: "Durov’s Caps" }
             ];
 
             let html = "";
@@ -72,7 +76,7 @@
 
                     const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`, { headers });
                     const floorData = await floorResp.ok ? await floorResp.json() : {};
-                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000) : null;
+                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
 
                     const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=10`, { headers });
                     const itemsData = await itemsResp.ok ? await itemsResp.json() : {};
@@ -81,17 +85,17 @@
                     let itemsHtml = "";
                     for (let item of items.slice(0, 5)) {
                         const itemName = item.metadata?.name || "Gift";
-                        const itemPrice = item.sale ? (item.sale.price.value / 1000000000) : null;
+                        const itemPrice = item.sale ? (item.sale.price.value / 1000000000).toFixed(2) : "—";
                         const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
 
-                        const profitable = (floor && itemPrice && itemPrice < floor * 0.9) ? '<div class="profitable">Выгодный flip! (ниже флора на 10%+)</div>' : '';
+                        const profitable = (floor !== "—" && itemPrice !== "—" && itemPrice < floor * 0.9) ? '<div class="profitable">★ Выгодный flip! (ниже флора)</div>' : '';
 
                         itemsHtml += `
                         <div class="card">
                             <img src="${itemImage}" alt="gift">
                             <div class="info">
                                 <div>${itemName}</div>
-                                <div class="price">${itemPrice ? itemPrice.toFixed(2) : '—'} TON</div>
+                                <div class="price">${itemPrice} TON</div>
                                 ${profitable}
                             </div>
                         </div>`;
@@ -100,7 +104,7 @@
                     html += `
                     <div class="collection">
                         <h3>${name}</h3>
-                        <div class="floor">Флор коллекции: ${floor ? floor.toFixed(2) : '—'} TON</div>
+                        <div class="floor">Флор коллекции: ${floor} TON</div>
                         ${itemsHtml || "<div class='loading'>Нет активных листингов в этой коллекции</div>"}
                     </div>`;
                 } catch (e) {
@@ -109,7 +113,7 @@
             }
 
             if (html === "") {
-                html = "<div class='loading'>Пока нет доступных коллекций.<br>Обновлю через 30 секунд...</div>";
+                html = "<div class='loading'>Пока нет активных коллекций.<br>Обновлю через 30 секунд...</div>";
             }
             content.innerHTML = html;
         }
