@@ -38,8 +38,6 @@
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
-        const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";
-
         function showTab(tab) {
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach(t => t.classList.remove('active'));
@@ -53,47 +51,42 @@
             const content = document.getElementById("content");
             content.innerHTML = "<div class='loading'>Загрузка выгодных листингов...</div>";
 
-            const headers = { "Authorization": `Bearer ${API_KEY}` };
-
             const collections = [
                 { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
                 { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
                 { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
                 { addr: "EQD9ikZq6xPgKjzmdBG0G0S80RvUJjbwgHrPZXDKc_wsE84w", name: "Durov’s Caps" },
                 { addr: "EQBT9PbZBR6FGcZBSnwgo-DLpc0r7_X_8dlhG5UA6v9l9uJM", name: "Cookie Hearts" },
-                { addr: "EQDLM65t0shS7gZAg0lMltGHYhsU94PzsMJHhYibmRV7kdUs", name: "Candy Canes" },
-                { addr: "EQACcQpR2fmdeENWdE2YGQWHVxSTyA8Zq4_k7rk_IaxCRXNe", name: "Vintage Cigars" },
-                { addr: "EQCWh1lPltyTwCWxCXm4umL5tPZoXR8kTIcT-pd0JqoadLHo", name: "Diamond Rings" }
+                { addr: "EQDLM65t0shS7gZAg0lMltGHYhsU94PzsMJHhYibmRV7kdUs", name: "Candy Canes" }
             ];
 
             let html = "";
             for (let col of collections) {
                 try {
-                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=20`, { headers });
-                    if (!itemsResp.ok) continue;
+                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`);
+                    const floorData = await floorResp.json();
+                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
+
+                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=20`);
                     const itemsData = await itemsResp.json();
                     const items = itemsData.nft_items || [];
 
-                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`, { headers });
-                    const floorData = await floorResp.ok ? await floorResp.json() : {};
-                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000) : null;
-
                     let itemsHtml = "";
                     for (let item of items) {
-                        if (!item.sale) continue; // только в продаже
+                        if (!item.sale) continue;
 
                         const itemName = item.metadata?.name || "Gift";
                         const itemPrice = (item.sale.price.value / 1000000000).toFixed(2);
                         const itemAddress = item.address;
                         const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
 
-                        const profitable = (floor && itemPrice < floor * 0.9) ? '<div class="profitable">★ Выгодный flip!</div>' : '';
+                        const profitable = (floor !== "—" && itemPrice < floor * 0.9) ? '<div class="profitable">★ Выгодный flip!</div>' : '';
 
                         itemsHtml += `
                         <div class="card">
                             <img src="${itemImage}" alt="gift">
                             <div class="info">
-                                <div>${itemName} (${col.name})</div>
+                                <div>${itemName}</div>
                                 <div class="price"><a href="https://getgems.io/nft/${itemAddress}" target="_blank">${itemPrice} TON</a></div>
                                 ${profitable}
                             </div>
@@ -104,7 +97,7 @@
                         html += `
                         <div class="collection">
                             <h3>${col.name}</h3>
-                            <div class="floor">Флор коллекции: ${floor ? floor.toFixed(2) : '—'} TON</div>
+                            <div class="floor">Флор коллекции: ${floor} TON</div>
                             ${itemsHtml}
                         </div>`;
                     }
