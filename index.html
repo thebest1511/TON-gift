@@ -17,7 +17,7 @@
         .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
         .info { flex: 1; }
         .price a { color: #00ff00; font-weight: bold; text-decoration: underline; }
-        .profitable { color: #ff0000; font-weight: bold; }
+        .profitable { color: #ff0000; font-weight: bold; font-size: 1.1em; }
         .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
     </style>
 </head>
@@ -31,7 +31,7 @@
     </div>
 
     <div id="content">
-        <div class="loading">Загрузка коллекций подарков...</div>
+        <div class="loading">Загрузка выгодных листингов...</div>
     </div>
 
     <script>
@@ -45,13 +45,13 @@
             tabs.forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
 
-            if (tab === 'listing') loadGiftsCollections();
+            if (tab === 'listing') loadGiftsListings();
             else document.getElementById("content").innerHTML = "<div class='loading'>Вкладка скоро будет доступна!</div>";
         }
 
-        async function loadGiftsCollections() {
+        async function loadGiftsListings() {
             const content = document.getElementById("content");
-            content.innerHTML = "<div class='loading'>Загрузка коллекций подарков...</div>";
+            content.innerHTML = "<div class='loading'>Загрузка выгодных листингов...</div>";
 
             const headers = { "Authorization": `Bearer ${API_KEY}` };
 
@@ -69,61 +69,58 @@
             let html = "";
             for (let col of collections) {
                 try {
-                    const colResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}`, { headers });
-                    if (!colResp.ok) continue;
-                    const colData = await colResp.json();
-
-                    const name = colData.name || col.name;
+                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=20`, { headers });
+                    if (!itemsResp.ok) continue;
+                    const itemsData = await itemsResp.json();
+                    const items = itemsData.nft_items || [];
 
                     const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`, { headers });
                     const floorData = await floorResp.ok ? await floorResp.json() : {};
-                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
-
-                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=10`, { headers });
-                    const itemsData = await itemsResp.ok ? await itemsResp.json() : {};
-                    const items = itemsData.nft_items || [];
+                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000) : null;
 
                     let itemsHtml = "";
-                    for (let item of items.slice(0, 5)) {
+                    for (let item of items) {
+                        if (!item.sale) continue; // только в продаже
+
                         const itemName = item.metadata?.name || "Gift";
-                        const itemPrice = item.sale ? (item.sale.price.value / 1000000000).toFixed(2) : "—";
+                        const itemPrice = (item.sale.price.value / 1000000000).toFixed(2);
                         const itemAddress = item.address;
                         const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
 
-                        const profitable = (floor !== "—" && itemPrice !== "—" && parseFloat(itemPrice) < parseFloat(floor) * 0.9) ? '<div class="profitable">★ Выгодный flip!</div>' : '';
-
-                        const priceLink = itemPrice !== "—" ? `<a href="https://getgems.io/nft/${itemAddress}" target="_blank">${itemPrice} TON</a>` : "—";
+                        const profitable = (floor && itemPrice < floor * 0.9) ? '<div class="profitable">★ Выгодный flip!</div>' : '';
 
                         itemsHtml += `
                         <div class="card">
                             <img src="${itemImage}" alt="gift">
                             <div class="info">
-                                <div>${itemName}</div>
-                                <div class="price">${priceLink}</div>
+                                <div>${itemName} (${col.name})</div>
+                                <div class="price"><a href="https://getgems.io/nft/${itemAddress}" target="_blank">${itemPrice} TON</a></div>
                                 ${profitable}
                             </div>
                         </div>`;
                     }
 
-                    html += `
-                    <div class="collection">
-                        <h3>${name}</h3>
-                        <div class="floor">Флор коллекции: ${floor} TON</div>
-                        ${itemsHtml || "<div class='loading'>Нет активных листингов</div>"}
-                    </div>`;
+                    if (itemsHtml) {
+                        html += `
+                        <div class="collection">
+                            <h3>${col.name}</h3>
+                            <div class="floor">Флор коллекции: ${floor ? floor.toFixed(2) : '—'} TON</div>
+                            ${itemsHtml}
+                        </div>`;
+                    }
                 } catch (e) {
                     console.error(e);
                 }
             }
 
             if (html === "") {
-                html = "<div class='loading'>Пока нет активных коллекций.<br>Обновлю через 30 секунд...</div>";
+                html = "<div class='loading'>Пока нет выгодных листингов.<br>Обновлю через 30 секунд...</div>";
             }
             content.innerHTML = html;
         }
 
-        loadGiftsCollections();
-        setInterval(loadGiftsCollections, 30000);
+        loadGiftsListings();
+        setInterval(loadGiftsListings, 30000);
     </script>
 </body>
 </html>
