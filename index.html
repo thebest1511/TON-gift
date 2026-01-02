@@ -46,8 +46,7 @@
             event.target.classList.add('active');
 
             if (tab === 'listing') loadGiftsCollections();
-            else if (tab === 'sales') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Продажа — скоро будет!</div>";
-            else if (tab === 'rent') document.getElementById("content").innerHTML = "<div class='loading'>Вкладка Аренда — скоро будет!</div>";
+            else document.getElementById("content").innerHTML = "<div class='loading'>Вкладка скоро будет доступна!</div>";
         }
 
         async function loadGiftsCollections() {
@@ -56,18 +55,12 @@
 
             const headers = { "Authorization": `Bearer ${API_KEY}` };
 
-            // Реальные коллекции Telegram Gifts (топ с GetGems)
+            // Реальные коллекции Telegram Gifts
             const collections = [
                 { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
                 { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
                 { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
-                { addr: "EQCWh1lPltyTwCWxCXm4umL5tPZoXR8kTIcT-pd0JqoadLHo", name: "Diamond Rings" },
-                { addr: "EQBMcfMAZlMUr1W3X8kdEw3fJMUAaWH4-XcmE5R5RfFIY0E2", name: "Desk Calendars" },
-                { addr: "EQBD8aBKC4NsnYMqtkCfPQk2EVnieynJQp1UgZVyx1VmR5Ml", name: "Witch Hats" },
-                { addr: "EQC6zjid8vJNEWqcXk10XjsdDLRKbcPZzbHusuEW6FokOWIm", name: "Lol Pops" },
-                { addr: "EQD9ikZq6xPgKjzmdBG0G0S80RvUJjbwgHrPZXDKc_wsE84w", name: "Durov’s Caps" },
-                { addr: "EQBT9PbZBR6FGcZBSnwgo-DLpc0r7_X_8dlhG5UA6v9l9uJM", name: "Cookie Hearts" },
-                { addr: "EQDLM65t0shS7gZAg0lMltGHYhsU94PzsMJHhYibmRV7kdUs", name: "Candy Canes" }
+                { addr: "EQDU4-7mWrsuVEBT2rLqZprQ2S9U0KX4hB3i6L1zpKqK0T7", name: "Khabib's Papakha" } // добавил Хабиба, если есть
             ];
 
             let html = "";
@@ -107,7 +100,7 @@
                     <div class="collection">
                         <h3>${name}</h3>
                         <div class="floor">Флор коллекции: ${floor} TON</div>
-                        ${itemsHtml || "<div class='loading'>Нет активных листингов в этой коллекции</div>"}
+                        ${itemsHtml || "<div class='loading'>Нет активных листингов</div>"}
                     </div>`;
                 } catch (e) {
                     console.error(e);
