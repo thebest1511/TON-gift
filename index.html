@@ -1,125 +1,132 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TON Gifts Live</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { background: #121212; color: #fff; font-family: Arial; padding: 15px; margin: 0; }
-        h2 { text-align: center; }
-        .tabs { display: flex; margin: 20px 0; gap: 10px; }
-        .tab { flex: 1; padding: 12px; background: #333; text-align: center; border-radius: 8px; cursor: pointer; }
-        .tab.active { background: #007bff; }
-        .collection { background: #1e1e1e; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-        .collection h3 { margin: 0 0 10px 0; }
-        .card { background: #2d2d2d; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
-        .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
-        .info { flex: 1; }
-        .price { font-size: 1.2em; font-weight: bold; color: #00ff00; }
-        .floor { font-size: 0.9em; color: #aaa; }
-        .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #aaa; }
-    </style>
-</head>
-<body>
-    <h2>🔥 TON Gifts — Коллекции подарков</h2>
+import asyncio
+import aiohttp
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ParseMode
 
-    <div class="tabs">
-        <div class="tab active" onclick="showTab('listing')">Листинг</div>
-        <div class="tab" onclick="showTab('sales')">Продажа</div>
-        <div class="tab" onclick="showTab('rent')">Аренда</div>
-    </div>
+# === ТВОИ ДАННЫЕ ===
+BOT_TOKEN = "7729327720:AAGlx0TNABjMPDFZMz01YAKDhfd_ZSTRB1g"  # твой токен
+MY_CHAT_ID = 1957724574  # твой личный ID
 
-    <div id="content">
-        <div class="loading">Загрузка коллекций подарков...</div>
-    </div>
+WEB_APP_URL = "https://thebest1511.github.io/TON-gift/"  # твоя ссылка на приложение
 
-    <script>
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
+MIN_PRICE = 0
+MAX_PRICE = 100
+# ===================
 
-        const API_KEY = "AF6QQYA263G72HAAAAAL7R6IHHI2WIFFDR7E5D5ZNMLQI2NSNTCYHF3DLF5FSNHU4TN22IA";
+bot = Bot(token=BOT_TOKEN)
 
-        function showTab(tab) {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+async def send_message(text, photo_url=None):
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🚀 Открыть приложение", web_app={"url": WEB_APP_URL})]
+    ])
 
-            if (tab === 'listing') loadGiftsCollections();
-            else document.getElementById("content").innerHTML = "<div class='loading'>Вкладка скоро будет доступна!</div>";
-        }
+    try:
+        if photo_url:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(photo_url) as resp:
+                    if resp.status == 200:
+                        photo_data = await resp.read()
+                        await bot.send_photo(chat_id=MY_CHAT_ID, photo=photo_data, caption=text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                        return
+        await bot.send_message(chat_id=MY_CHAT_ID, text=text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+    except Exception as e:
+        print(f"Не удалось отправить сообщение: {e}")
+        print("Возможно, ты не написал боту первым. Напиши ему /start или 'привет' в Telegram.")
 
-        async function loadGiftsCollections() {
-            const content = document.getElementById("content");
-            content.innerHTML = "<div class='loading'>Загрузка коллекций подарков...</div>";
+async def main():
+    print("Бот запущен! Ждём новые листинги подарков...")
 
-            const headers = { "Authorization": `Bearer ${API_KEY}` };
+    # Стартовое сообщение (придёт после того, как ты напишешь боту)
+    await send_message("🚀 Бот запущен и работает!\n\nЯ присылаю новые листинги подарков до 100 TON.\nНажми кнопку ниже, чтобы открыть приложение с коллекциями и фильтрами 👇")
 
-            const collections = [
-                { addr: "EQBG-g6ahkAUGWpefWbx-D_9sQ8oWbvy6puuq78U2c4NUDFS", name: "Plush Pepes" },
-                { addr: "EQC4XEulxb05Le5gF6esMtDWT5XZ6tlzlMBQGNsqffxpdC5U", name: "Heart Lockets" },
-                { addr: "EQBI07PXew94YQz7GwN72nPNGF6htSTOJkuU4Kx_bjTZv32U", name: "Swiss Watches" },
-                { addr: "EQD9ikZq6xPgKjzmdBG0G0S80RvUJjbwgHrPZXDKc_wsE84w", name: "Durov’s Caps" },
-                { addr: "EQBT9PbZBR6FGcZBSnwgo-DLpc0r7_X_8dlhG5UA6v9l9uJM", name: "Cookie Hearts" },
-                { addr: "EQDLM65t0shS7gZAg0lMltGHYhsU94PzsMJHhYibmRV7kdUs", name: "Candy Canes" },
-                { addr: "EQACcQpR2fmdeENWdE2YGQWHVxSTyA8Zq4_k7rk_IaxCRXNe", name: "Vintage Cigars" },
-                { addr: "EQCWh1lPltyTwCWxCXm4umL5tPZoXR8kTIcT-pd0JqoadLHo", name: "Diamond Rings" },
-                { addr: "EQBMcfMAZlMUr1W3X8kdEw3fJMUAaWH4-XcmE5R5RfFIY0E2", name: "Desk Calendars" },
-                { addr: "EQD7yDu2WCgd9Uzx1dF_DQkWK7IZJJ4Mp9M9g1rGUUiQE43m", name: "Love Potions" }
-            ];
+    processed = set()
 
-            let html = "";
-            for (let col of collections) {
-                try {
-                    const colResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}`, { headers });
-                    if (!colResp.ok) continue;
-                    const colData = await colResp.json();
+    while True:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://tonapi.io/v2/events?limit=50") as resp:
+                    if resp.status != 200:
+                        await asyncio.sleep(15)
+                        continue
+                    data = await resp.json()
+                    events = data.get("events", [])
 
-                    const name = colData.name || col.name;
+            for event in events:
+                event_id = event.get("id")
+                if event_id in processed:
+                    continue
 
-                    const floorResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/floor_price`, { headers });
-                    const floorData = await floorResp.ok ? await floorResp.json() : {};
-                    const floor = floorData.floor_price ? (floorData.floor_price / 1000000000).toFixed(2) : "—";
+                actions = event.get("actions", [])
+                if not actions:
+                    continue
+                action = actions[0]
+                if action.get("type") != "NftItemSalePlace":
+                    continue
 
-                    const itemsResp = await fetch(`https://tonapi.io/v2/nft/collections/${col.addr}/items?limit=10`, { headers });
-                    const itemsData = await itemsResp.ok ? await itemsResp.json() : {};
-                    const items = itemsData.nft_items || [];
+                sale = action.get("NftItemSalePlace", {})
+                nft_address = sale.get("nft")
+                price_value = sale.get("price", {}).get("value", 0)
+                if not nft_address or not price_value:
+                    continue
 
-                    let itemsHtml = "";
-                    for (let item of items.slice(0, 5)) {
-                        const itemName = item.metadata?.name || "Gift";
-                        const itemPrice = item.sale ? (item.sale.price.value / 1000000000).toFixed(2) : "—";
-                        const itemImage = item.previews?.reverse().find(p => p.url)?.url || "https://via.placeholder.com/80?text=Gift";
+                price = int(price_value) / 1_000_000_000
+                if not (MIN_PRICE <= price <= MAX_PRICE):
+                    continue
 
-                        itemsHtml += `
-                        <div class="card">
-                            <img src="${itemImage}" alt="gift">
-                            <div class="info">
-                                <div>${itemName}</div>
-                                <div class="price">${itemPrice} TON</div>
-                            </div>
-                        </div>`;
-                    }
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://tonapi.io/v2/nfts/{nft_address}") as nft_resp:
+                        if nft_resp.status != 200:
+                            continue
+                        nft = await nft_resp.json()
 
-                    html += `
-                    <div class="collection">
-                        <h3>${name}</h3>
-                        <div class="floor">Флор коллекции: ${floor} TON</div>
-                        ${itemsHtml || "<div class='loading'>Нет активных листингов в этой коллекции</div>"}
-                    </div>`;
-                } catch (e) {
-                    console.error(e);
-                }
-            }
+                metadata = nft.get("metadata", {})
+                name = metadata.get("name", "Gift").strip()
+                collection = nft.get("collection", {})
+                collection_name = collection.get("name", "Unknown").strip()
 
-            if (html === "") {
-                html = "<div class='loading'>Пока нет доступных коллекций.<br>Обновлю через 30 секунд...</div>";
-            }
-            content.innerHTML = html;
-        }
+                previews = nft.get("previews", [])
+                photo_url = next((p.get("url") for p in reversed(previews) if p.get("url")), None)
 
-        loadGiftsCollections();
-        setInterval(loadGiftsCollections, 30000);
-    </script>
-</body>
-</html>
+                collection_addr = collection.get("address")
+                floor = "—"
+                if collection_addr:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"https://tonapi.io/v2/nft/collections/{collection_addr}/floor_price") as floor_resp:
+                            if floor_resp.status == 200:
+                                floor_data = await floor_resp.json()
+                                floor_val = floor_data.get("floor_price")
+                                if floor_val:
+                                    floor = f"{int(floor_val)/1_000_000_000:.2f}"
+
+                marketplace = "Unknown"
+                sale_str = str(sale).lower()
+                if "getgems" in sale_str:
+                    marketplace = "GetGems"
+                elif "tonnel" in sale_str:
+                    marketplace = "Tonnel"
+                elif "mrkt" in sale_str:
+                    marketplace = "MRKT"
+                elif "portals" in sale_str:
+                    marketplace = "Portals"
+
+                text = f"""
+🔥 Новый листинг!
+[{collection_name}]
+{name}
+
+💰 {price:.2f} TON на {marketplace}
+
+Флор: {floor} TON
+
+Ссылка: https://getgems.io/nft/{nft_address}
+                """.strip()
+
+                await send_message(text, photo_url)
+                processed.add(event_id)
+
+        except Exception as e:
+            print(f"Ошибка в цикле: {e}")
+
+        await asyncio.sleep(15)
+
+asyncio.run(main())
